@@ -8,7 +8,7 @@ local SETBRIGHTNESS_BIN = os.getenv("HOME") .. "/.hammerspoon/setbrightness"
 local POLL_INTERVAL = 1       -- 秒，盖子状态 + 菜单栏刷新频率
 local FADE_DURATION = 1.5     -- 秒，开盖渐亮时长
 local HOTKEY_MODS = { "ctrl", "alt", "cmd" }  -- 切换模式的快捷键修饰
-local HOTKEY_KEY  = "f6"                       -- 切换模式的主键
+local HOTKEY_KEY  = "6"                        -- 切换模式的主键
 
 local lidMenu = hs.menubar.new(true, "clamshellModeIndicator")
 if lidMenu and lidMenu.setPriority then

@@ -40,7 +40,7 @@ cd clamshell-mode-mac
 
 - **点击 💤** → 切到 ☕️：合盖不睡模式开启
 - **再点 ☕️** → 切回 💤：恢复默认（合盖正常睡眠）
-- **快捷键** `⌃⌥⌘ + F6` 也能切换（在 `clamshell.lua` 里改 `HOTKEY_MODS` / `HOTKEY_KEY` 自定义）
+- **快捷键** `⌃⌥⌘ + 6` 也能切换（在 `clamshell.lua` 里改 `HOTKEY_MODS` / `HOTKEY_KEY` 自定义）
 - ☕️ 模式下：合盖时屏幕亮度归 0；开盖时 1.5 秒平滑升回
 
 > ⚠️ 合盖不睡时机器在包里散热受限，电池也消耗更快。长时间不用记得切回 💤。
@@ -53,7 +53,7 @@ cd clamshell-mode-mac
 local POLL_INTERVAL = 1                       -- 盖子状态轮询间隔（秒）
 local FADE_DURATION = 1.5                     -- 开盖渐亮时长（秒）
 local HOTKEY_MODS = { "ctrl", "alt", "cmd" }  -- 切换快捷键修饰
-local HOTKEY_KEY  = "f6"                       -- 切换快捷键主键
+local HOTKEY_KEY  = "6"                        -- 切换快捷键主键
 ```
 
 改完点 Hammerspoon 菜单 → Reload Config。
