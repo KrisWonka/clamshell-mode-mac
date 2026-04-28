@@ -1,3 +1,7 @@
 setbrightness
 *.dSYM/
 .DS_Store
+app/.build/
+app/.swiftpm/
+app/Package.resolved
+.build-cache/

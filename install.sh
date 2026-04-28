@@ -55,6 +55,34 @@ fi
 install -m 644 "$REPO_DIR/clamshell.lua" "$HS_DIR/clamshell.lua"
 green "已拷贝 clamshell.lua → $HS_DIR/"
 
+# 5b. 渲染默认菜单栏图标（SF Symbols → PNG）
+RENDERER="$REPO_DIR/.build-renderer"
+mkdir -p "$REPO_DIR/.build-cache"
+cat > "$REPO_DIR/.build-cache/render.swift" <<'SWEOF'
+import AppKit
+let args = CommandLine.arguments
+guard args.count == 3 else { exit(1) }
+let symbol = args[1]
+let outputPath = args[2]
+let pointSize: CGFloat = 18
+guard let baseImg = NSImage(systemSymbolName: symbol, accessibilityDescription: nil) else { exit(2) }
+let cfg = NSImage.SymbolConfiguration(pointSize: pointSize, weight: .medium)
+let img = baseImg.withSymbolConfiguration(cfg) ?? baseImg
+let scale: CGFloat = 2
+guard let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(pointSize*scale), pixelsHigh: Int(pointSize*scale), bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 32) else { exit(3) }
+rep.size = NSSize(width: pointSize, height: pointSize)
+NSGraphicsContext.saveGraphicsState()
+NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+NSColor.black.setFill()
+img.draw(in: NSRect(x: 0, y: 0, width: pointSize, height: pointSize), from: .zero, operation: .sourceOver, fraction: 1.0)
+NSGraphicsContext.restoreGraphicsState()
+try! rep.representation(using: .png, properties: [:])!.write(to: URL(fileURLWithPath: outputPath))
+SWEOF
+swiftc "$REPO_DIR/.build-cache/render.swift" -o "$REPO_DIR/.build-cache/render" 2>/dev/null
+"$REPO_DIR/.build-cache/render" "zzz" "$HS_DIR/icon-sleep.png"
+"$REPO_DIR/.build-cache/render" "cup.and.saucer.fill" "$HS_DIR/icon-awake.png"
+green "已生成菜单栏图标"
+
 # 6. 在 init.lua 里 require（幂等）
 touch "$INIT_LUA"
 if grep -qF "$MARKER" "$INIT_LUA"; then
@@ -69,7 +97,17 @@ else
   green "  -> 已追加"
 fi
 
-# 7. 重载 Hammerspoon
+# 7. （可选）编译并安装 Clamshell Mode.app 配置 GUI
+if [ -d "$REPO_DIR/app" ]; then
+  bold "编译 Clamshell Mode.app（GUI 配置面板）…"
+  if (cd "$REPO_DIR/app" && bash build-app.sh) >/dev/null 2>&1; then
+    green "  -> /Applications/Clamshell Mode.app（Spotlight 搜「Clamshell」打开）"
+  else
+    red "  app 编译失败（可跳过，命令行配置一样能用）"
+  fi
+fi
+
+# 8. 重载 Hammerspoon
 bold "重载 Hammerspoon…"
 osascript -e 'quit app "Hammerspoon"' 2>/dev/null || true
 sleep 1

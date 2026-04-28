@@ -45,6 +45,16 @@ cd clamshell-mode-mac
 
 > ⚠️ 合盖不睡时机器在包里散热受限，电池也消耗更快。长时间不用记得切回 💤。
 
+## 配置 GUI
+
+`install.sh` 同时编译并装好一个 SwiftUI 配置面板 **Clamshell Mode.app**（在 `/Applications/`），Spotlight 搜「Clamshell」即可打开。三个标签页：
+
+- **Setup**：实时检测 Hammerspoon / SSH / sudoers 状态；列出所有网络接口的 IP（自动识别 iPhone 热点 / Tailscale / WiFi），方便配 iPhone Shortcut；展示 Mac Shortcut 的脚本内容供复制
+- **Settings**：手机号、提醒延时（1–120 分钟）、亮度过渡时长、快捷键、菜单栏图标（任意 SF Symbol）、各功能独立开关；保存自动重载 Hammerspoon
+- **About**：仓库链接
+
+GUI 写到 `~/.hammerspoon/clamshell-config.json`，clamshell.lua 启动时读取。手动改 JSON 然后 reload Hammerspoon 也行。
+
 ## 自定义
 
 编辑 `~/.hammerspoon/clamshell.lua` 顶部的常量：
