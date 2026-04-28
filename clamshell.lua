@@ -10,6 +10,11 @@ local FADE_DURATION = 1.5     -- 秒，开盖渐亮时长
 local HOTKEY_MODS = { "ctrl", "alt", "cmd" }  -- 切换模式的快捷键修饰
 local HOTKEY_KEY  = "6"                        -- 切换模式的主键
 
+-- 合盖不睡 + 长时间未开盖时给你 iPhone 推 iMessage 提醒
+-- 留 nil 关闭功能；填你的号码（带国家码）启用，例如 "+8613812345678"
+local NOTIFY_PHONE = nil
+local LID_CLOSED_NOTIFY_AFTER = 15 * 60        -- 秒，超过此时长仍合盖则推送
+
 local lidMenu = hs.menubar.new(true, "clamshellModeIndicator")
 if lidMenu and lidMenu.setPriority then
   lidMenu:setPriority(hs.menubar.priorities.system or 2147483647)
@@ -59,6 +64,16 @@ menuTimer:start()
 local savedBrightness = nil
 local fadeTask = nil
 local lidPoller -- 前向声明，fade 时暂停以避免子进程干扰
+local notifyTimer = nil
+
+local function sendIMessage(text)
+  if not NOTIFY_PHONE then return end
+  local script = string.format(
+    'tell application "Messages" to send %q to buddy %q of (1st service whose service type = iMessage)',
+    text, NOTIFY_PHONE
+  )
+  hs.task.new("/usr/bin/osascript", nil, { "-e", script }):start()
+end
 
 local function fadeBrightnessTo(targetInt, durationSec)
   if fadeTask then fadeTask:terminate(); fadeTask = nil end
@@ -86,8 +101,19 @@ lidPoller = hs.timer.doEvery(POLL_INTERVAL, function()
     if getSleepDisabled() then
       savedBrightness = hs.brightness.get()
       hs.brightness.set(0)
+      if NOTIFY_PHONE then
+        if notifyTimer then notifyTimer:stop() end
+        notifyTimer = hs.timer.doAfter(LID_CLOSED_NOTIFY_AFTER, function()
+          sendIMessage(string.format(
+            "📌 你的 Mac 在「合盖不睡眠」模式下已合盖 %d 分钟，记得检查一下",
+            math.floor(LID_CLOSED_NOTIFY_AFTER / 60)
+          ))
+          notifyTimer = nil
+        end)
+      end
     end
   elseif (not closed) and lidWasClosed then
+    if notifyTimer then notifyTimer:stop(); notifyTimer = nil end
     if savedBrightness then
       fadeBrightnessTo(savedBrightness, FADE_DURATION)
       savedBrightness = nil

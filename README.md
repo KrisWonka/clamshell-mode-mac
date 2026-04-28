@@ -54,7 +54,15 @@ local POLL_INTERVAL = 1                       -- 盖子状态轮询间隔（秒�
 local FADE_DURATION = 1.5                     -- 开盖渐亮时长（秒）
 local HOTKEY_MODS = { "ctrl", "alt", "cmd" }  -- 切换快捷键修饰
 local HOTKEY_KEY  = "6"                        -- 切换快捷键主键
+local NOTIFY_PHONE = nil                       -- 填手机号（"+8613..."）启用 iMessage 提醒
+local LID_CLOSED_NOTIFY_AFTER = 15 * 60        -- 合盖超过此秒数仍未开 → 推送提醒
 ```
+
+### iMessage 提醒说明
+
+填了 `NOTIFY_PHONE` 后，「合盖不睡」模式下合盖超过 15 分钟仍未开盖，Mac 会用 iMessage 给你的手机发条提醒，方便在外面想起来「Mac 是不是还在包里跑着」。开盖立即取消计时。
+
+依赖：Mac 已登录 iCloud 并启用 iMessage（默认就有），手机号格式带国家码（中国 `+86`、美国 `+1` 等）。
 
 改完点 Hammerspoon 菜单 → Reload Config。
 
