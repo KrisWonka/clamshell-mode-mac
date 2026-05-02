@@ -48,34 +48,13 @@ struct SettingsView: View {
             Section("快捷键") {
                 Toggle("启用全局快捷键", isOn: $config.hotkeyEnabled)
                 HStack {
-                    Text("修饰键")
-                    HStack {
-                        ForEach(["ctrl", "alt", "cmd", "shift"], id: \.self) { mod in
-                            Toggle(mod, isOn: Binding(
-                                get: { config.hotkeyMods.contains(mod) },
-                                set: { isOn in
-                                    if isOn {
-                                        if !config.hotkeyMods.contains(mod) { config.hotkeyMods.append(mod) }
-                                    } else {
-                                        config.hotkeyMods.removeAll { $0 == mod }
-                                    }
-                                }
-                            ))
-                            .toggleStyle(.checkbox)
-                        }
-                    }
-                    Spacer()
+                    Text("组合键")
+                    HotkeyRecorder(mods: $config.hotkeyMods, key: $config.hotkeyKey)
                 }
                 .disabled(!config.hotkeyEnabled)
-                HStack {
-                    Text("主键")
-                    TextField("6", text: $config.hotkeyKey)
-                        .textFieldStyle(.roundedBorder)
-                        .frame(maxWidth: 80)
-                        .font(.system(.body, design: .monospaced))
-                    Spacer()
-                }
-                .disabled(!config.hotkeyEnabled)
+                Text("点上方按钮 → 按一下组合键即可绑定（ESC 取消）。修饰键 ⌃⌥⇧⌘ 至少要有一个。")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
 
             Section("菜单栏图标") {
