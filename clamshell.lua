@@ -100,11 +100,14 @@ end
 
 local function fadeBrightnessTo(targetInt, durationSec)
   if fadeTask then fadeTask:terminate(); fadeTask = nil end
+  -- fade 期间暂停所有会 spawn 子进程的轮询，避免抢 CPU 打断 60fps 节奏
   if lidPoller then lidPoller:stop() end
+  if menuTimer then menuTimer:stop() end
   fadeTask = hs.task.new(
     SETBRIGHTNESS_BIN,
     function()
       if lidPoller then lidPoller:start() end
+      if menuTimer then menuTimer:start() end
       fadeTask = nil
     end,
     { "fade", string.format("%.4f", targetInt / 100), tostring(durationSec) }
