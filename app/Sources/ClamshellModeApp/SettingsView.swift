@@ -65,6 +65,24 @@ struct SettingsView: View {
                     .foregroundColor(.secondary)
             }
 
+            Section("屏幕中央提示文字") {
+                HStack {
+                    Text("睡眠模式 (💤)")
+                        .frame(width: 130, alignment: .leading)
+                    TextField("Clam Sleep", text: $config.alertSleep)
+                        .textFieldStyle(.roundedBorder)
+                }
+                HStack {
+                    Text("唤醒模式 (☕️)")
+                        .frame(width: 130, alignment: .leading)
+                    TextField("Clam Awake", text: $config.alertAwake)
+                        .textFieldStyle(.roundedBorder)
+                }
+                Text("切换合盖模式时，屏幕中央会闪现这段文字 1.5 秒")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
             Section("高级") {
                 HStack {
                     Text("盖子状态轮询间隔")

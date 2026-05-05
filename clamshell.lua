@@ -21,6 +21,8 @@ local cfg = {
   notifyDelaySec = 15 * 60,
   iconSleep = "zzz",
   iconAwake = "cup.and.saucer.fill",
+  alertSleep = "Clam Sleep",
+  alertAwake = "Clam Awake",
 }
 
 local function loadConfig()
@@ -65,11 +67,7 @@ local function toggleClamshell()
   local target = getSleepDisabled() and "0" or "1"
   hs.execute("/usr/bin/sudo -n /usr/bin/pmset -a disablesleep " .. target)
   refreshMenu()
-  hs.notify.new({
-    title = "合盖模式",
-    informativeText = target == "1" and "合盖不睡眠 — 程序继续跑" or "合盖会睡眠 — 已恢复默认",
-    withdrawAfter = 2,
-  }):send()
+  hs.alert.show(target == "1" and cfg.alertAwake or cfg.alertSleep, 1.5)
 end
 
 if lidMenu then

@@ -12,6 +12,8 @@ struct ClamshellConfig: Codable, Equatable {
     var hotkeyEnabled: Bool = true
     var iconSleep: String = "zzz"
     var iconAwake: String = "cup.and.saucer.fill"
+    var alertSleep: String = "Clam Sleep"
+    var alertAwake: String = "Clam Awake"
 
     static let configPath: String = {
         NSString(string: "~/.hammerspoon/clamshell-config.json").expandingTildeInPath
