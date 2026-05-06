@@ -26,9 +26,9 @@ macOS 「合盖不睡眠」一键切换 + 合盖自动调暗 / 开盖渐亮。�
 
 ## 安装
 
-### 全新 Mac 一键装（同时装上 [fan-hotkey-mac](https://github.com/KrisWonka/fan-hotkey-mac)）
+### 全新 Mac 一键装
 
-把 Xcode CLT、Homebrew、Hammerspoon、Macs Fan Control 和两个项目一次性装好：
+把本项目需要的 Xcode CLT、Homebrew、Hammerspoon 和项目本身一次性装好：
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/KrisWonka/clamshell-mode-mac/main/bootstrap.sh | bash

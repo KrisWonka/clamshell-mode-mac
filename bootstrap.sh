@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# 一键引导：在全新 macOS 上装好 clamshell-mode-mac + fan-hotkey-mac
-# 包含所有前置依赖（Xcode CLT / Homebrew / Hammerspoon / Macs Fan Control）
+# 一键引导：在全新 macOS 上装好 clamshell-mode-mac
+# 包含所有前置依赖（Xcode CLT / Homebrew / Hammerspoon）
 #
 # 用法（在新 Mac 上）：
 #   curl -fsSL https://raw.githubusercontent.com/KrisWonka/clamshell-mode-mac/main/bootstrap.sh | bash
@@ -20,67 +20,58 @@ mkdir -p "$WORKDIR"
 
 # ---- 1. Xcode Command Line Tools ----
 if ! xcode-select -p >/dev/null 2>&1; then
-  bold "[1/6] 安装 Xcode Command Line Tools（弹窗里点 Install，等装完即可继续）…"
+  bold "[1/5] 安装 Xcode Command Line Tools（弹窗里点 Install，等装完即可继续）…"
   xcode-select --install || true
   until xcode-select -p >/dev/null 2>&1; do sleep 5; done
   green "  -> CLT 就绪"
 else
-  green "[1/6] Xcode CLT 已装，跳过"
+  green "[1/5] Xcode CLT 已装，跳过"
 fi
 
 # ---- 2. Homebrew ----
 if ! command -v brew >/dev/null 2>&1; then
-  bold "[2/6] 安装 Homebrew…"
+  bold "[2/5] 安装 Homebrew…"
   NONINTERACTIVE=1 /bin/bash -c \
     "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
   if   [ -x /opt/homebrew/bin/brew ]; then eval "$(/opt/homebrew/bin/brew shellenv)"
   elif [ -x /usr/local/bin/brew ];   then eval "$(/usr/local/bin/brew shellenv)"
   fi
 else
-  green "[2/6] Homebrew 已装，跳过"
+  green "[2/5] Homebrew 已装，跳过"
   eval "$(brew shellenv)"
 fi
 
-# ---- 3. Hammerspoon（两个项目共用）----
-# 各项目的专属依赖（如 fan-hotkey 需要的 Macs Fan Control）由各自的 install.sh 装
-bold "[3/6] 安装 Hammerspoon…"
+# ---- 3. Hammerspoon ----
+bold "[3/5] 安装 Hammerspoon…"
 brew install --cask hammerspoon
 
 # ---- 4. 启动一次 Hammerspoon 申请 Accessibility 权限 ----
 if ! pgrep -q Hammerspoon; then
-  bold "[4/6] 首次启动 Hammerspoon — 弹窗里给「辅助功能 / Accessibility」权限…"
+  bold "[4/5] 首次启动 Hammerspoon — 弹窗里给「辅助功能 / Accessibility」权限…"
   open -ga Hammerspoon
   sleep 2
 else
-  green "[4/6] Hammerspoon 已在运行"
+  green "[4/5] Hammerspoon 已在运行"
 fi
 
-# ---- 5. 拉取两个项目 ----
-bold "[5/6] 拉取项目到 $WORKDIR …"
+# ---- 5. 拉取 clamshell-mode-mac 并跑 install.sh ----
+bold "[5/5] 拉取 clamshell-mode-mac 到 $WORKDIR 并安装…"
 cd "$WORKDIR"
-for repo in clamshell-mode-mac fan-hotkey-mac; do
-  if [ -d "$repo/.git" ]; then
-    (cd "$repo" && git pull --ff-only) || true
-    green "  -> $repo 已在，已尝试更新"
-  else
-    git clone "https://github.com/KrisWonka/$repo.git"
-    green "  -> 已 clone $repo"
-  fi
-done
-
-# ---- 6. 跑两个 installer ----
-bold "[6/6] 执行各项目自带 install.sh…"
+if [ -d "clamshell-mode-mac/.git" ]; then
+  (cd clamshell-mode-mac && git pull --ff-only) || true
+  green "  -> 仓库已在，已尝试更新"
+else
+  git clone https://github.com/KrisWonka/clamshell-mode-mac.git
+fi
 ( cd "$WORKDIR/clamshell-mode-mac" && ./install.sh )
-( cd "$WORKDIR/fan-hotkey-mac"     && ./install.sh )
 
 green ""
-green "🎉 全部装好了"
+green "🎉 clamshell-mode-mac 装好了"
 cat <<EOF
 
-下一步（新 Mac 上记得做）:
+下一步:
   - System Settings → Privacy & Security → Accessibility
     确认 Hammerspoon 是 ON（首次必须，否则快捷键不响应）
   - ⌃⌥⌘ + 6 切换「合盖不睡眠」
-  - ⌃⌥⌘ + 8 切换 Macs Fan Control「全速 / Auto」
-  - Spotlight 搜「Clamshell」/「Fan Hotkey」开各自 GUI 调设置
+  - Spotlight 搜「Clamshell」开 GUI 调设置
 EOF
