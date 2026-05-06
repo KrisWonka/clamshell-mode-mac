@@ -41,9 +41,10 @@ else
   eval "$(brew shellenv)"
 fi
 
-# ---- 3. Hammerspoon + Macs Fan Control ----
-bold "[3/6] 安装 Hammerspoon / Macs Fan Control…"
-brew install --cask hammerspoon macs-fan-control
+# ---- 3. Hammerspoon（两个项目共用）----
+# 各项目的专属依赖（如 fan-hotkey 需要的 Macs Fan Control）由各自的 install.sh 装
+bold "[3/6] 安装 Hammerspoon…"
+brew install --cask hammerspoon
 
 # ---- 4. 启动一次 Hammerspoon 申请 Accessibility 权限 ----
 if ! pgrep -q Hammerspoon; then
