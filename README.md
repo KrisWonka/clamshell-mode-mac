@@ -26,6 +26,16 @@ Bypasses macOS's "force sleep when no external display" behavior by using `pmset
 
 ## Install
 
+### Fresh-Mac one-liner (also installs [fan-hotkey-mac](https://github.com/KrisWonka/fan-hotkey-mac))
+
+Bootstraps everything from scratch — Xcode CLT, Homebrew, Hammerspoon, Macs Fan Control, both repos:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/KrisWonka/clamshell-mode-mac/main/bootstrap.sh | bash
+```
+
+### Manual
+
 Requires: [Hammerspoon](https://www.hammerspoon.org/) and Xcode Command Line Tools (`xcode-select --install`).
 
 ```bash
