@@ -1,30 +1,32 @@
 # clamshell-mode-mac
 
-macOS 「合盖不睡眠」一键切换 + 合盖自动调暗 / 开盖渐亮。无需外接显示器。
+[English](README.md) | [中文](README.zh.md)
 
-- **菜单栏图标**（SF Symbol 渲染）一键切换
-- **唤醒模式下** 合盖：系统继续运行（程序、下载、训练全部不中断），屏幕亮度归 0 省电护屏
-- **开盖瞬间** 用 60fps 小数精度过渡平滑升回原亮度，无突兀闪烁
-- **iPhone 远程切回** 通过 Shortcuts SSH 一键关闭唤醒并立即睡眠
-- **长时间合盖 iMessage 提醒**（可选），方便包里跑着别忘了
+One-click macOS "lid-closed without sleep" toggle, with automatic dim-on-close and smooth fade-in on lid open. **No external display required.**
 
-> Apple Silicon Mac 验证通过。Intel Mac 理论也可用，但 `setbrightness` 工具未测试。
+- **Menu bar icon** (rendered with SF Symbols) — one-click toggle
+- **Awake mode** keeps the system fully running on lid close (programs, downloads, training jobs all uninterrupted), while the screen brightness drops to 0 to save power and protect the panel
+- **Lid-open** triggers a 60fps sub-percent brightness fade back to your previous level — no jarring flash
+- **Remote sleep from iPhone** via a Shortcuts SSH command — disable awake-mode and sleep instantly
+- **Optional iMessage reminder** when the lid has been closed for a long time, so you don't forget the laptop is still running in your bag
 
-## 工作原理
+> Verified on Apple Silicon Mac. Should work on Intel Macs too, but the `setbrightness` helper has not been tested there.
 
-绕开 macOS 在没有外接显示器时强制睡眠的限制：用 `pmset disablesleep 1` 在系统层关掉合盖触发的睡眠。盖子开关状态用 `ioreg AppleClamshellState` 轮询；亮度通过私有框架 `DisplayServices` 直接调用，达到比公开 API 更细的小数级精度。
+## How it works
 
-| 组件 | 作用 |
+Bypasses macOS's "force sleep when no external display" behavior by using `pmset disablesleep 1` to disable the lid-close sleep trigger at the system level. Lid state is polled via `ioreg AppleClamshellState`. Brightness is driven through the private `DisplayServices` framework for sub-percent precision that the public API doesn't expose.
+
+| Component | Role |
 |------|------|
-| `clamshell.lua` | Hammerspoon 主逻辑：菜单栏、轮询、亮度协调 |
-| `setbrightness` (Swift) | 调 `DisplayServicesSetBrightness` 私有 API，60fps 内置 fade |
-| `Clamshell Mode.app` (SwiftUI) | 配置 GUI：状态检查、网络识别、所有可调项 |
-| `~/.hammerspoon/clamshell-config.json` | 单一配置源，App 写入，lua 读取 |
-| `/etc/sudoers.d/clamshell-mode-pmset` | 让 `pmset` 免密 sudo |
+| `clamshell.lua` | Hammerspoon main logic: menu bar, polling, brightness coordination |
+| `setbrightness` (Swift) | Calls `DisplayServicesSetBrightness` private API with a built-in 60fps fade |
+| `Clamshell Mode.app` (SwiftUI) | Configurator GUI: status checks, network detection, all tunable options |
+| `~/.hammerspoon/clamshell-config.json` | Single source of truth — app writes, lua reads |
+| `/etc/sudoers.d/clamshell-mode-pmset` | Passwordless sudo for `pmset` only |
 
-## 安装
+## Install
 
-依赖：[Hammerspoon](https://www.hammerspoon.org/)、Xcode Command Line Tools (`xcode-select --install`)。
+Requires: [Hammerspoon](https://www.hammerspoon.org/) and Xcode Command Line Tools (`xcode-select --install`).
 
 ```bash
 git clone https://github.com/KrisWonka/clamshell-mode-mac.git
@@ -32,45 +34,47 @@ cd clamshell-mode-mac
 ./install.sh
 ```
 
-安装脚本会：
-1. 编译 `setbrightness` 到 `~/.hammerspoon/`
-2. 在 `/etc/sudoers.d/` 写一条仅放行 `pmset` 的免密规则（要你输一次密码）
-3. 拷贝 `clamshell.lua` + 默认菜单栏图标到 `~/.hammerspoon/`
-4. 在 `~/.hammerspoon/init.lua` 里追加 `require("clamshell")`
-5. 写入默认 `clamshell-config.json`（已存在就不动）
-6. 编译 `Clamshell Mode.app` 装到 `/Applications/`
-7. 重载 Hammerspoon
+The installer will:
+1. Build `setbrightness` and place it in `~/.hammerspoon/`
+2. Add a sudoers rule in `/etc/sudoers.d/` allowing only `pmset` without a password (you'll be asked once)
+3. Copy `clamshell.lua` and the default menu bar icons into `~/.hammerspoon/`
+4. Append `require("clamshell")` to `~/.hammerspoon/init.lua`
+5. Write a default `clamshell-config.json` (skipped if one already exists)
+6. Build `Clamshell Mode.app` and install it to `/Applications/`
+7. Reload Hammerspoon
 
-完成后右上角菜单栏出现 SF Symbol 图标，Spotlight 搜「Clamshell」打开 GUI 配置面板。
+Once done, an SF Symbol icon appears in the menu bar — open the GUI from Spotlight by searching "Clamshell".
 
-## 使用
+Or grab the prebuilt `.dmg` from [Releases](https://github.com/KrisWonka/clamshell-mode-mac/releases) and drag the app into Applications, then run `./install.sh` to wire up the Hammerspoon side.
 
-### 菜单栏 / 快捷键
-- 点菜单栏图标切换睡眠/唤醒模式
-- 默认快捷键 **`⌃⌥⌘ + 6`**（在 GUI Settings 里可改）
-- 唤醒模式下合盖：屏幕亮度归 0；开盖：1.5s 平滑升回
+## Usage
 
-### 配置 GUI（**Clamshell Mode.app**）
-Spotlight 搜「Clamshell」打开。三个标签：
+### Menu bar / hotkey
+- Click the menu bar icon to toggle sleep / awake mode
+- Default hotkey **`⌃⌥⌘ + 6`** (rebindable in GUI Settings)
+- Awake-mode lid close → brightness to 0; lid open → 1.5s smooth fade back
 
-- **Setup**：实时检测 Hammerspoon / SSH / sudoers 状态；列出所有网络接口的 IP（自动识别 iPhone 热点 / Tailscale / WiFi）；展示 Mac 端 Shortcut 脚本供复制
-- **Settings**：手机号、提醒延时（1–120 分钟）、亮度过渡时长、快捷键、菜单栏图标（任意 SF Symbol）、各功能独立开关。**保存后自动重载**
-- **About**：仓库链接
+### Configurator (`Clamshell Mode.app`)
+Open via Spotlight. Three tabs:
 
-### iPhone 远程切回睡眠
+- **Setup**: live status of Hammerspoon / SSH / sudoers; lists every network interface IP (auto-labels iPhone hotspot / Tailscale / WiFi); shows the Mac-side Shortcut script ready to copy
+- **Settings**: phone number, reminder delay (1–120 min), brightness fade duration, hotkey, menu bar icon (any SF Symbol), and per-feature toggles. **Auto-reloads Hammerspoon on save**
+- **About**: repo link
 
-1. Mac 端开 Remote Login（系统设置 → 通用 → 共享 → 远程登录）
-2. 用 GUI 的 Setup 页查 IP（推荐 Tailscale，跨网络稳定；同 WiFi 用 Bonjour 名）
-3. iPhone Shortcuts 新建 → 加「**通过 SSH 运行脚本**」→ 填 GUI 显示的 Host / User / Port，脚本：
+### Remote sleep from iPhone
+
+1. Enable Remote Login on the Mac (System Settings → General → Sharing → Remote Login)
+2. Pick an IP from the GUI Setup tab (Tailscale recommended for cross-network reliability; same-WiFi users can use the Bonjour `.local` name)
+3. iPhone Shortcuts → new shortcut → add **Run Script Over SSH** → fill in the Host / User / Port shown in the GUI, with this script:
    ```
    /usr/bin/sudo -n /usr/bin/pmset -a disablesleep 0 && /usr/bin/pmset sleepnow
    ```
 
-> ⚠️ 合盖不睡时机器在包里散热受限，电池也消耗更快。长时间不用记得切回。
+> ⚠️ Closed-lid awake mode means the chassis is in a bag with limited cooling, and battery drains faster. Remember to switch back when you're not using it.
 
-## 手动改配置
+## Manual config
 
-不开 GUI 也能改 —— 编辑 `~/.hammerspoon/clamshell-config.json`，然后 reload Hammerspoon。
+You can edit the config file directly without the GUI — `~/.hammerspoon/clamshell-config.json`, then reload Hammerspoon.
 
 ```json
 {
@@ -81,33 +85,33 @@ Spotlight 搜「Clamshell」打开。三个标签：
   "hotkeyMods": ["ctrl", "alt", "cmd"],
   "hotkeyKey": "6",
   "notifyEnabled": false,
-  "phone": "+8613...",
+  "phone": "+1...",
   "notifyDelaySec": 900,
   "iconSleep": "zzz",
   "iconAwake": "cup.and.saucer.fill"
 }
 ```
 
-## 卸载
+## Uninstall
 
 ```bash
 ./uninstall.sh
 ```
 
-或手动：
+Or manually:
 
 ```bash
 rm ~/.hammerspoon/{setbrightness,clamshell.lua,clamshell-config.json,icon-sleep.png,icon-awake.png}
 rm -rf "/Applications/Clamshell Mode.app"
 sudo rm -f /etc/sudoers.d/clamshell-mode-pmset
-# 编辑 ~/.hammerspoon/init.lua，删掉 require("clamshell") 那两行
-# 然后 reload Hammerspoon
+# Edit ~/.hammerspoon/init.lua and remove the two lines for require("clamshell")
+# Then reload Hammerspoon
 ```
 
-## 致谢
+## Acknowledgements
 
-- [Hammerspoon](https://www.hammerspoon.org/) — macOS 自动化框架
-- `DisplayServices` 私有框架的用法参考社区多年积累
+- [Hammerspoon](https://www.hammerspoon.org/) — macOS automation framework
+- `DisplayServices` private API usage builds on years of community reverse-engineering
 
 ## License
 
