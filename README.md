@@ -68,7 +68,7 @@ Or grab the prebuilt `.dmg` from [Releases](https://github.com/KrisWonka/clamshe
 Open via Spotlight. Three tabs:
 
 - **Setup**: live status of Hammerspoon / SSH / sudoers; lists every network interface IP (auto-labels iPhone hotspot / Tailscale / WiFi); shows the Mac-side Shortcut script ready to copy
-- **Settings**: phone number, reminder delay (1–120 min), brightness fade duration, hotkey, menu bar icon (any SF Symbol), and per-feature toggles. **Auto-reloads Hammerspoon on save**
+- **Settings**: system display timers (screen saver start / display-off on battery / display-off on power, reads & writes macOS settings directly), phone number, reminder delay (1–120 min), brightness fade duration, hotkey, menu bar icon (any SF Symbol), and per-feature toggles. **Auto-reloads Hammerspoon on save**
 - **About**: repo link
 
 ### Remote sleep from iPhone

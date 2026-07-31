@@ -3,11 +3,44 @@ import SwiftUI
 struct SettingsView: View {
     @Binding var config: ClamshellConfig
     @State private var saveStatus: SaveStatus = .idle
+    @State private var screenTimers = ScreenTimers(screensaverMin: 20, displaySleepBatteryMin: nil, displaySleepACMin: 0)
+    @State private var loadedTimers: ScreenTimers? = nil   // 读入快照，diff 基准；nil = 尚未加载
+    @State private var sudoOK = true
 
     enum SaveStatus { case idle, saving, saved, error(String) }
 
     var body: some View {
         Form {
+            Section("系统亮屏时间") {
+                if !sudoOK {
+                    Label("pmset 免密 sudo 未配置，请到 Setup 页检查", systemImage: "exclamationmark.triangle.fill")
+                        .foregroundColor(.red)
+                }
+                timerPicker("启动屏幕保护程序",
+                            selection: $screenTimers.screensaverMin,
+                            base: ScreenTimersIO.screensaverBase,
+                            loaded: loadedTimers?.screensaverMin)
+                if screenTimers.displaySleepBatteryMin != nil {
+                    timerPicker("电池供电时关闭显示器",
+                                selection: Binding(
+                                    get: { screenTimers.displaySleepBatteryMin ?? 0 },
+                                    set: { screenTimers.displaySleepBatteryMin = $0 }
+                                ),
+                                base: ScreenTimersIO.displaySleepBase,
+                                loaded: loadedTimers.flatMap { $0.displaySleepBatteryMin })
+                        .disabled(!sudoOK)
+                }
+                timerPicker("接通电源时关闭显示器",
+                            selection: $screenTimers.displaySleepACMin,
+                            base: ScreenTimersIO.displaySleepBase,
+                            loaded: loadedTimers?.displaySleepACMin)
+                    .disabled(!sudoOK)
+                Text("直接修改 macOS 系统设置（= 系统设置 → 锁定屏幕），保存时生效")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .disabled(loadedTimers == nil)   // 系统值读到之前整区不可交互
+
             Section("亮度过渡") {
                 Toggle("开盖渐亮", isOn: $config.fadeEnabled)
                 HStack {
@@ -95,6 +128,18 @@ struct SettingsView: View {
         }
         .formStyle(.grouped)
         .padding()
+        .onAppear {
+            guard loadedTimers == nil else { return }
+            DispatchQueue.global().async {
+                let timers = ScreenTimersIO.readAll()
+                let sudo = SystemInfo.isSudoersConfigured
+                DispatchQueue.main.async {
+                    screenTimers = timers
+                    loadedTimers = timers
+                    sudoOK = sudo
+                }
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 HStack {
@@ -102,6 +147,14 @@ struct SettingsView: View {
                     Button("保存并重载") { save() }
                         .keyboardShortcut("s", modifiers: .command)
                 }
+            }
+        }
+    }
+
+    private func timerPicker(_ label: String, selection: Binding<Int>, base: [Int], loaded: Int?) -> some View {
+        Picker(label, selection: selection) {
+            ForEach(ScreenTimersIO.pickerOptions(base: base, current: loaded ?? 0), id: \.self) { m in
+                Text(m == 0 ? "永不" : "\(m) 分钟").tag(m)
             }
         }
     }
@@ -122,15 +175,30 @@ struct SettingsView: View {
 
     private func save() {
         saveStatus = .saving
+        let timersToApply = loadedTimers.map { (screenTimers, $0) }   // 主线程取快照再进后台
         DispatchQueue.global().async {
             do {
                 try config.save()
                 IconRenderer.regenerate(sleep: config.iconSleep, awake: config.iconAwake)
                 SystemInfo.reloadHammerspoon()
+                var timerError: String? = nil
+                var fresh: ScreenTimers? = nil
+                if let (new, prev) = timersToApply {
+                    timerError = ScreenTimersIO.apply(new, previous: prev)
+                    fresh = ScreenTimersIO.readAll()   // 回读确认，UI 回显系统真实值
+                }
                 DispatchQueue.main.async {
-                    saveStatus = .saved
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                        if case .saved = saveStatus { saveStatus = .idle }
+                    if let fresh {
+                        screenTimers = fresh
+                        loadedTimers = fresh
+                    }
+                    if let timerError {
+                        saveStatus = .error(timerError)
+                    } else {
+                        saveStatus = .saved
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            if case .saved = saveStatus { saveStatus = .idle }
+                        }
                     }
                 }
             } catch {
