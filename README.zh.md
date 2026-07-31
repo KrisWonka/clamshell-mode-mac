@@ -66,7 +66,7 @@ cd clamshell-mode-mac
 Spotlight 搜「Clamshell」打开。三个标签：
 
 - **Setup**：实时检测 Hammerspoon / SSH / sudoers 状态；列出所有网络接口的 IP（自动识别 iPhone 热点 / Tailscale / WiFi）；展示 Mac 端 Shortcut 脚本供复制
-- **Settings**：手机号、提醒延时（1–120 分钟）、亮度过渡时长、快捷键、菜单栏图标（任意 SF Symbol）、各功能独立开关。**保存后自动重载**
+- **Settings**：系统亮屏时间（屏保启动 / 电池关屏 / 电源关屏，直接读写系统设置）、手机号、提醒延时（1–120 分钟）、亮度过渡时长、快捷键、菜单栏图标（任意 SF Symbol）、各功能独立开关。**保存后自动重载**
 - **About**：仓库链接
 
 ### iPhone 远程切回睡眠

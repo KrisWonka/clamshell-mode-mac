@@ -8,6 +8,11 @@ let package = Package(
         .executableTarget(
             name: "ClamshellModeApp",
             path: "Sources/ClamshellModeApp"
+        ),
+        .testTarget(
+            name: "ClamshellModeAppTests",
+            dependencies: ["ClamshellModeApp"],
+            path: "Tests/ClamshellModeAppTests"
         )
     ]
 )
