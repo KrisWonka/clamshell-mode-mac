@@ -6,8 +6,11 @@ struct SettingsView: View {
     @State private var screenTimers = ScreenTimers(screensaverMin: 20, displaySleepBatteryMin: nil, displaySleepACMin: 0)
     @State private var loadedTimers: ScreenTimers? = nil   // 读入快照，diff 基准；nil = 尚未加载
     @State private var sudoOK = true
+    @State private var testPushStatus: TestPushStatus = .idle
 
     enum SaveStatus { case idle, saving, saved, error(String) }
+
+    enum TestPushStatus { case idle, sending, ok, fail(String) }
 
     var body: some View {
         Form {
@@ -53,13 +56,16 @@ struct SettingsView: View {
                 .disabled(!config.fadeEnabled)
             }
 
-            Section("iMessage 长时间合盖提醒") {
+            Section("Bark 长时间合盖提醒") {
                 Toggle("启用", isOn: $config.notifyEnabled)
                 HStack {
-                    Text("手机号")
-                    TextField("", text: $config.barkKey)
+                    Text("Device Key")
+                    TextField("在 Bark App 首页复制", text: $config.barkKey)
                         .textFieldStyle(.roundedBorder)
                         .font(.system(.body, design: .monospaced))
+                    Button("发送测试推送") { sendTestPush() }
+                        .disabled(config.barkKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    testPushBadge
                 }
                 .disabled(!config.notifyEnabled)
                 HStack {
@@ -76,6 +82,9 @@ struct SettingsView: View {
                         .font(.system(.body, design: .monospaced))
                 }
                 .disabled(!config.notifyEnabled)
+                Text("App Store 安装 Bark，打开 App 首页复制 device key。唤醒模式下合盖超过阈值，iPhone 收到推送提醒。")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
 
             Section("快捷键") {
@@ -157,6 +166,41 @@ struct SettingsView: View {
                 Text(m == 0 ? "永不" : "\(m) 分钟").tag(m)
             }
         }
+    }
+
+    @ViewBuilder
+    private var testPushBadge: some View {
+        switch testPushStatus {
+        case .idle:
+            EmptyView()
+        case .sending:
+            ProgressView().controlSize(.small)
+        case .ok:
+            Label("已发送", systemImage: "checkmark.circle.fill").foregroundColor(.green)
+        case .fail(let msg):
+            Label(msg, systemImage: "xmark.circle.fill").foregroundColor(.red)
+        }
+    }
+
+    private func sendTestPush() {
+        testPushStatus = .sending
+        let key = config.barkKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        let title = "Clamshell Mode".addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? "ClamshellMode"
+        let body = "测试推送 ✓".addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? "test"
+        guard let url = URL(string: "https://api.day.app/\(key)/\(title)/\(body)") else {
+            testPushStatus = .fail("URL 无效"); return
+        }
+        URLSession.shared.dataTask(with: url) { _, resp, err in
+            DispatchQueue.main.async {
+                if let err {
+                    testPushStatus = .fail(err.localizedDescription)
+                } else if let http = resp as? HTTPURLResponse, http.statusCode == 200 {
+                    testPushStatus = .ok
+                } else {
+                    testPushStatus = .fail("HTTP \((resp as? HTTPURLResponse)?.statusCode ?? -1)")
+                }
+            }
+        }.resume()
     }
 
     @ViewBuilder

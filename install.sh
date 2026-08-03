@@ -74,7 +74,7 @@ else
   "iconSleep" : "zzz",
   "notifyDelaySec" : 900,
   "notifyEnabled" : false,
-  "phone" : "",
+  "barkKey" : "",
   "pollInterval" : 1
 }
 EOF
@@ -145,7 +145,7 @@ cat <<EOF
 下一步：
 - 抬头看右上角菜单栏，应该有月亮 zzz 图标
 - 点图标或按 ⌃⌥⌘+6 切换合盖不睡眠模式
-- Spotlight 搜「Clamshell」打开 GUI 配置（手机号 / 快捷键 / 图标 / 时长等）
+- Spotlight 搜「Clamshell」打开 GUI 配置（Bark 提醒 / 快捷键 / 图标 / 时长等）
 
 要卸载：./uninstall.sh
 EOF
