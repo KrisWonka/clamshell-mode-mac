@@ -1,6 +1,6 @@
 # 移除 SSH/iMessage、改用 Bark 提醒、新增 App 图标 — 设计 spec
 
-日期：2026-07-31
+日期：2026-07-31（2026-08-03 增补：吸收交接文档三项未决问题）
 状态：已获用户批准
 
 ## 背景与目标
@@ -8,7 +8,9 @@
 1. **删除**整套「iPhone 通过 SSH 远程让 Mac 睡眠」功能（用户不用了）。
 2. **长时间合盖提醒**的通知通道从 iMessage 换成 **Bark**（iOS 推送 App，官方服务器 `api.day.app`，仅配 device key）。
 3. 给 Clamshell Mode.app 做一个**贝壳母题的 App 图标**（当前没有图标）。
-4. 全部完成后 commit + push GitHub。
+4. **（增补）收编两处孤本改动进 main**：光标/WindowServer 修复（原存于旧克隆未推分支 `fix/menubar-refresh-window-storm` @3f14aa2 与部署版 lua）；Bark 发送骨架（原只存在于部署版 lua，字段 `barkURL`，但用户 config 从未配置过该键——**无数据迁移负担**）。
+5. **（增补）部署同步**：main 完成后用 install.sh 重新部署 `~/.hammerspoon/`，消灭「仓库 ≠ 运行时」分裂（现场已有备份 `~/.hammerspoon/backup-20260803-052548/`）。
+6. 全部完成后 commit + push GitHub。**朋友机器（tsc@100.100.15.127）这轮不动**，以后 git pull + install.sh 自行升级。
 
 ## 1. 删除 SSH 远程切换
 
@@ -27,9 +29,18 @@
 ### 发送（`clamshell.lua`）
 
 - `sendIMessage(text)` → `sendBark(body)`：`hs.http.asyncGet` 请求
-  `https://api.day.app/<barkKey>/<title>/<body>`，title 固定 `Clamshell Mode`，title/body 用 `hs.http.encodeForQuery` 逐段 URL 编码；回调里失败仅 `print` 日志，不打扰用户。
+  `https://api.day.app/<barkKey>/<title>/<body>`，title 固定 `Clamshell Mode`，title/body 用 `hs.http.encodeForQuery` 逐段 URL 编码；回调里 status ≠ 200 仅 `print` 日志，不打扰用户（沿用部署版 sendBark 的骨架，把 barkURL 拼接改为 barkKey + 官方服务器 + 标题段）。
 - 触发逻辑不变：唤醒模式合盖超过 `notifyDelaySec` 发一条；提醒文案沿用原中文（"…已合盖 N 分钟…"）。
 - 守卫从 `phone == ""` 改为 `barkKey == ""`。cfg 默认表删 `phone`、加 `barkKey = ""`。
+
+### （增补）光标/WindowServer 修复转正（`clamshell.lua`）
+
+把部署版 / 旧克隆 3f14aa2 的修复原样收进 main（部署版已验证多日）：
+
+- `lastSleepDisabled` 状态缓存；`refreshMenu(force)` 在 `not force and disabled == lastSleepDisabled` 时直接 return——无条件每秒重设菜单栏项会让 macOS 反复重排整条菜单栏，macOS 27 上表现为 WindowServer 刷 `_CGXPackagesSetWindowConstraints: Invalid window`（约 120 次/分钟），偶发 `set_cursor_surface` 失败、光标不变形。
+- `toggleClamshell` 内改调 `refreshMenu(true)`（点击/热键路径强制重绘）。
+- 菜单栏刷新定时器与盖子轮询解耦：`menuInterval = cfg.menuRefreshInterval or 15`（原来跟 `pollInterval` 共用 1 秒，每秒 fork `pmset -g | awk` 子进程是残余 Invalid window 的来源）。`menuRefreshInterval` 仅作为 lua 侧可选配置键，**不进 GUI**（YAGNI）。
+- 保留部署版里解释这两处的注释。
 
 ### GUI（`SettingsView.swift`）
 
@@ -64,4 +75,7 @@
 
 ## 交付
 
-全部完成并验证后：更新 DEV_NOTES / SESSION_LOG（/sync 惯例）、commit、push `origin/main`。
+- **部署同步**：main 验证通过后跑 `./install.sh` 重新部署 `~/.hammerspoon/`（脚本对已存在的 config JSON 不覆盖；用户现有 config 里残留的 `phone` 键无害，GUI 首次保存后自动消失），reload 后确认菜单栏图标 + 盖子轮询正常。
+- **DEV_NOTES 修正**：删除两处过期的「本目录当前不是 git 仓库」表述（自 2026-07-31 commit 464c0d3 起已是 git 仓库且有 origin），并按 /sync 惯例补记本轮改动；SESSION_LOG 追加条目。
+- commit、push `origin/main`（连同此前未推的 spec commit 一起）。
+- 旧克隆 `~/clamshell-mode-mac` 与其分支 `fix/menubar-refresh-window-storm` 在修复收编进 main 后即无孤本价值，本轮不删除、不合并，仅在 DEV_NOTES 记一句"可清理"。
