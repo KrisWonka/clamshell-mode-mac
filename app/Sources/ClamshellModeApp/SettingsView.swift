@@ -57,7 +57,7 @@ struct SettingsView: View {
                 Toggle("启用", isOn: $config.notifyEnabled)
                 HStack {
                     Text("手机号")
-                    TextField("+8613812345678", text: $config.phone)
+                    TextField("", text: $config.barkKey)
                         .textFieldStyle(.roundedBorder)
                         .font(.system(.body, design: .monospaced))
                 }
