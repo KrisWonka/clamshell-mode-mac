@@ -83,7 +83,7 @@ fi
 
 # 6. 在 init.lua 里 require（幂等）
 touch "$INIT_LUA"
-if grep -qF "$MARKER" "$INIT_LUA"; then
+if grep -qF 'require("clamshell")' "$INIT_LUA"; then
   green "init.lua 已包含 clamshell-mode-mac，跳过追加"
 else
   bold "追加 require 到 init.lua…"
