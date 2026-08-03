@@ -20,11 +20,10 @@ struct ContentView: View {
 struct AboutView: View {
     var body: some View {
         VStack(spacing: 16) {
-            Image(systemName: "laptopcomputer")
+            Image(nsImage: NSApp.applicationIconImage)
                 .resizable()
                 .scaledToFit()
                 .frame(width: 80, height: 80)
-                .foregroundColor(.accentColor)
             Text("Clamshell Mode")
                 .font(.largeTitle).bold()
             Text("macOS 合盖不睡眠 + 智能亮度联动 + 远程切换")
