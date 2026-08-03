@@ -105,9 +105,36 @@ if [ -d "$REPO_DIR/app" ]; then
   fi
 fi
 
-# 8. 重载 Hammerspoon
+# 8. Hammerspoon 开机自启
+# 不设的话重启后 Hammerspoon 不启动 = 菜单栏图标和快捷键全没，容易误判成装失败。
+bold "设置 Hammerspoon 开机自启…"
+if osascript -e 'tell application "System Events" to get the name of every login item' 2>/dev/null | grep -q "Hammerspoon"; then
+  green "  -> 已在登录项里"
+else
+  if osascript -e 'tell application "System Events" to make login item at end with properties {path:"/Applications/Hammerspoon.app", hidden:true}' >/dev/null 2>&1; then
+    green "  -> 已加入登录项"
+  else
+    red "  自动添加失败，请手动在 Hammerspoon 设置里勾 Launch Hammerspoon at login"
+  fi
+fi
+
+# 9. 可选：隐藏 Hammerspoon 自己的锤子图标，给菜单栏腾位置
+# 有刘海的 MacBook 菜单栏很容易挤爆：放不下的图标会被塞到刘海底下，看起来就是「图标没出现」。
+if [ "${HIDE_HS_MENUICON:-0}" = "1" ]; then
+  bold "隐藏 Hammerspoon 锤子图标（HIDE_HS_MENUICON=1）…"
+  if ! grep -q 'hs.menuIcon(false)' "$INIT_LUA" 2>/dev/null; then
+    printf '\n-- 隐藏 Hammerspoon 自己的锤子图标，给菜单栏腾位置\nhs.menuIcon(false)\n' >> "$INIT_LUA"
+  fi
+  green "  -> 已写入 init.lua"
+fi
+
+# 10. 重载 Hammerspoon
+# 注意：对已在运行的 Hammerspoon 执行 open 只会激活它，**不会重新加载 init.lua**，
+# 必须先退干净再开，否则装完看起来毫无反应。
 bold "重载 Hammerspoon…"
 osascript -e 'quit app "Hammerspoon"' 2>/dev/null || true
+sleep 1
+pkill -x Hammerspoon 2>/dev/null || true
 sleep 1
 open -a Hammerspoon
 sleep 1
