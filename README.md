@@ -7,8 +7,7 @@ One-click macOS "lid-closed without sleep" toggle, with automatic dim-on-close a
 - **Menu bar icon** (rendered with SF Symbols) — one-click toggle
 - **Awake mode** keeps the system fully running on lid close (programs, downloads, training jobs all uninterrupted), while the screen brightness drops to 0 to save power and protect the panel
 - **Lid-open** triggers a 60fps sub-percent brightness fade back to your previous level — no jarring flash
-- **Remote sleep from iPhone** via a Shortcuts SSH command — disable awake-mode and sleep instantly
-- **Optional iMessage reminder** when the lid has been closed for a long time, so you don't forget the laptop is still running in your bag
+- **Optional Bark push reminder** when the lid has been closed for a long time, so you don't forget the laptop is still running in your bag
 
 > Verified on Apple Silicon Mac. Should work on Intel Macs too, but the `setbrightness` helper has not been tested there.
 
@@ -20,7 +19,7 @@ Bypasses macOS's "force sleep when no external display" behavior by using `pmset
 |------|------|
 | `clamshell.lua` | Hammerspoon main logic: menu bar, polling, brightness coordination |
 | `setbrightness` (Swift) | Calls `DisplayServicesSetBrightness` private API with a built-in 60fps fade |
-| `Clamshell Mode.app` (SwiftUI) | Configurator GUI: status checks, network detection, all tunable options |
+| `Clamshell Mode.app` (SwiftUI) | Configurator GUI: status checks, all tunable options |
 | `~/.hammerspoon/clamshell-config.json` | Single source of truth — app writes, lua reads |
 | `/etc/sudoers.d/clamshell-mode-pmset` | Passwordless sudo for `pmset` only |
 
@@ -64,23 +63,14 @@ Or grab the prebuilt `.dmg` from [Releases](https://github.com/KrisWonka/clamshe
 - Default hotkey **`⌃⌥⌘ + 6`** (rebindable in GUI Settings)
 - Awake-mode lid close → brightness to 0; lid open → 1.5s smooth fade back
 
+> ⚠️ Closed-lid awake mode means the chassis is in a bag with limited cooling, and battery drains faster. Remember to switch back when you're not using it.
+
 ### Configurator (`Clamshell Mode.app`)
 Open via Spotlight. Three tabs:
 
-- **Setup**: live status of Hammerspoon / SSH / sudoers; lists every network interface IP (auto-labels iPhone hotspot / Tailscale / WiFi); shows the Mac-side Shortcut script ready to copy
-- **Settings**: system display timers (screen saver start / display-off on battery / display-off on power, reads & writes macOS settings directly), phone number, reminder delay (1–120 min), brightness fade duration, hotkey, menu bar icon (any SF Symbol), and per-feature toggles. **Auto-reloads Hammerspoon on save**
+- **Setup**: live status of Hammerspoon / sudoers
+- **Settings**: system display timers (screen saver start / display-off on battery / display-off on power, reads & writes macOS settings directly), Bark reminder (device key + delay threshold + test push), brightness fade duration, hotkey, menu bar icon (any SF Symbol), and per-feature toggles. **Auto-reloads Hammerspoon on save**
 - **About**: repo link
-
-### Remote sleep from iPhone
-
-1. Enable Remote Login on the Mac (System Settings → General → Sharing → Remote Login)
-2. Pick an IP from the GUI Setup tab (Tailscale recommended for cross-network reliability; same-WiFi users can use the Bonjour `.local` name)
-3. iPhone Shortcuts → new shortcut → add **Run Script Over SSH** → fill in the Host / User / Port shown in the GUI, with this script:
-   ```
-   /usr/bin/sudo -n /usr/bin/pmset -a disablesleep 0 && /usr/bin/pmset sleepnow
-   ```
-
-> ⚠️ Closed-lid awake mode means the chassis is in a bag with limited cooling, and battery drains faster. Remember to switch back when you're not using it.
 
 ## Manual config
 
@@ -95,12 +85,14 @@ You can edit the config file directly without the GUI — `~/.hammerspoon/clamsh
   "hotkeyMods": ["ctrl", "alt", "cmd"],
   "hotkeyKey": "6",
   "notifyEnabled": false,
-  "phone": "+1...",
+  "barkKey": "your-bark-device-key",
   "notifyDelaySec": 900,
   "iconSleep": "zzz",
   "iconAwake": "cup.and.saucer.fill"
 }
 ```
+
+There is also a lua-only optional key `menuRefreshInterval` (menu bar self-refresh seconds, default 15).
 
 ## Troubleshooting
 
