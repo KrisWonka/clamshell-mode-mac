@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#232a63"/>
+      <stop offset="1" stop-color="#0d1130"/>
+    </linearGradient>
+    <linearGradient id="shellTop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f0f3fb"/>
+      <stop offset="1" stop-color="#a9b6dc"/>
+    </linearGradient>
+    <linearGradient id="shellBottom" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8894c0"/>
+      <stop offset="1" stop-color="#5a6491"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+    <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+  </defs>
+  <rect x="64" y="64" width="896" height="896" rx="200" fill="url(#bg)"/>
+  <ellipse cx="512" cy="580" rx="300" ry="46" fill="#7fd7ff" opacity="0.55" filter="url(#glow)"/>
+  <path d="M212,568 C212,362 342,238 512,238 C682,238 812,362 812,568 L212,568 Z" fill="url(#shellTop)"/>
+  <g stroke="#7c88b4" stroke-width="10" stroke-linecap="round" opacity="0.55">
+    <line x1="512" y1="560" x2="286" y2="430"/>
+    <line x1="512" y1="560" x2="360" y2="322"/>
+    <line x1="512" y1="560" x2="512" y2="262"/>
+    <line x1="512" y1="560" x2="664" y2="322"/>
+    <line x1="512" y1="560" x2="738" y2="430"/>
+  </g>
+  <ellipse cx="420" cy="330" rx="150" ry="70" fill="#ffffff" opacity="0.16" transform="rotate(-18 420 330)"/>
+  <rect x="240" y="572" width="544" height="16" rx="8" fill="#bfeaff" filter="url(#softGlow)"/>
+  <rect x="272" y="575" width="480" height="10" rx="5" fill="#ffffff"/>
+  <path d="M232,600 C286,700 738,700 792,600 C700,668 324,668 232,600 Z" fill="url(#shellBottom)"/>
+</svg>
