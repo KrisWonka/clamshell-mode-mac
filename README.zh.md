@@ -100,6 +100,46 @@ Spotlight 搜「Clamshell」打开。三个标签：
 }
 ```
 
+## 常见问题 / 踩过的坑
+
+### 菜单栏没有月亮图标
+
+1. **菜单栏挤爆了，图标被刘海吞了。** 有刘海的 MacBook 上状态栏图标从右往左排，排不下的会落到刘海底下——**不是没生成，是看不见**。装的时候加 `HIDE_HS_MENUICON=1` 可隐藏 Hammerspoon 自己的锤子腾出约 30px：
+
+   ```bash
+   HIDE_HS_MENUICON=1 ./install.sh
+   ```
+
+   再不够就精简别的常驻图标。注意 Hammerspoon 报的 `frame` 坐标**不反映刘海遮挡**，被盖住的图标照样有正常坐标，不能靠坐标判断可见性。
+
+2. **Hammerspoon 没开机自启。** 重启后 HS 没启动 = 图标和快捷键全没，很容易误判成装失败。新版 `install.sh` 会自动加登录项。
+
+3. **改完配置没真正重载。** 对已在运行的 Hammerspoon 执行 `open` 只是激活它，**不会重新加载 init.lua**：
+
+   ```bash
+   osascript -e 'quit app "Hammerspoon"'; sleep 1; pkill -x Hammerspoon; open -ga Hammerspoon
+   ```
+
+### 图标出现了一会儿又消失
+
+`hs.menubar` / `hs.timer` 对象存在 `local` 变量里，chunk 执行完没有强引用就会被 Lua GC 回收——表现为图标先出现后消失、合盖轮询悄悄停掉。本项目已改成全局变量（`lidMenu` / `menuTimer` / `lidPoller`）。
+
+### 点图标切换没反应 / 提示要密码
+
+一键切换靠 `sudo -n pmset -a disablesleep`，需要 `/etc/sudoers.d/clamshell-mode-pmset` 放行。检查：
+
+```bash
+sudo -n /usr/bin/pmset -g >/dev/null && echo "免密 OK" || echo "sudoers 没配好，重跑 ./install.sh"
+```
+
+### 合盖后没调暗 / 开盖没渐亮
+
+`setbrightness` 用的是 `DisplayServices` 私有框架，只对内置屏有效，外接显示器不管用。确认二进制在且可执行：
+
+```bash
+ls -l ~/.hammerspoon/setbrightness && ~/.hammerspoon/setbrightness fade 0.5 1
+```
+
 ## 卸载
 
 ```bash

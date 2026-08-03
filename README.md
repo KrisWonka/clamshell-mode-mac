@@ -102,6 +102,46 @@ You can edit the config file directly without the GUI — `~/.hammerspoon/clamsh
 }
 ```
 
+## Troubleshooting
+
+### No moon icon in the menu bar
+
+1. **The menu bar is full and the notch ate the icon.** On notched MacBooks status items lay out right-to-left, and whatever doesn't fit lands underneath the notch — **it exists, you just can't see it**. Install with `HIDE_HS_MENUICON=1` to hide Hammerspoon's own hammer and free ~30px:
+
+   ```bash
+   HIDE_HS_MENUICON=1 ./install.sh
+   ```
+
+   Beyond that, trim other always-on items. Note that the `frame` Hammerspoon reports **does not account for notch occlusion** — hidden items still report normal coordinates, so coordinates can't tell you whether something is visible.
+
+2. **Hammerspoon isn't set to launch at login.** After a reboot HS never starts, so the icon and hotkey are gone — easy to mistake for a failed install. The installer adds the login item for you.
+
+3. **The config wasn't really reloaded.** Running `open` against an already-running Hammerspoon just activates it and **does not reload `init.lua`**:
+
+   ```bash
+   osascript -e 'quit app "Hammerspoon"'; sleep 1; pkill -x Hammerspoon; open -ga Hammerspoon
+   ```
+
+### The icon shows up and then disappears
+
+`hs.menubar` / `hs.timer` objects stored in `local` variables lose their last strong reference once the chunk finishes and get collected by Lua's GC — the icon vanishes and the lid poller quietly stops. This project keeps them global (`lidMenu` / `menuTimer` / `lidPoller`).
+
+### Clicking the icon does nothing, or asks for a password
+
+One-click toggling runs `sudo -n pmset -a disablesleep`, which needs `/etc/sudoers.d/clamshell-mode-pmset`:
+
+```bash
+sudo -n /usr/bin/pmset -g >/dev/null && echo "passwordless OK" || echo "sudoers missing — re-run ./install.sh"
+```
+
+### No dimming on lid close / no fade-in on open
+
+`setbrightness` uses the private `DisplayServices` framework, which only affects the built-in display — external monitors won't respond. Check the binary:
+
+```bash
+ls -l ~/.hammerspoon/setbrightness && ~/.hammerspoon/setbrightness fade 0.5 1
+```
+
 ## Uninstall
 
 ```bash

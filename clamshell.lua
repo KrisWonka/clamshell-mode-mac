@@ -35,7 +35,9 @@ local function loadConfig()
 end
 loadConfig()
 
-local lidMenu = hs.menubar.new(true, "clamshellModeIndicator")
+-- 注意：菜单栏对象和定时器必须是全局的。存成 local 的话 chunk 执行完就没有强引用，
+-- Lua GC 随时可能回收它们 —— 表现为图标先出现后消失、轮询悄悄停掉。
+lidMenu = hs.menubar.new(true, "clamshellModeIndicator")
 if lidMenu and lidMenu.setPriority then
   lidMenu:setPriority(hs.menubar.priorities.system or 2147483647)
 end
@@ -79,12 +81,12 @@ if cfg.hotkeyEnabled and cfg.hotkeyKey and #cfg.hotkeyMods > 0 then
   hs.hotkey.bind(cfg.hotkeyMods, cfg.hotkeyKey, toggleClamshell)
 end
 
-local menuTimer = hs.timer.doEvery(cfg.pollInterval, refreshMenu)
+menuTimer = hs.timer.doEvery(cfg.pollInterval, refreshMenu)  -- 全局：防 GC
 menuTimer:start()
 
 local savedBrightness = nil
 local fadeTask = nil
-local lidPoller
+-- lidPoller 同样是全局（防 GC），不要加 local
 local notifyTimer = nil
 
 local function sendIMessage(text)
