@@ -17,7 +17,7 @@ local cfg = {
   hotkeyMods = { "ctrl", "alt", "cmd" },
   hotkeyKey = "6",
   notifyEnabled = false,
-  phone = "",
+  barkKey = "",
   notifyDelaySec = 15 * 60,
   iconSleep = "zzz",
   iconAwake = "cup.and.saucer.fill",
@@ -52,9 +52,17 @@ local function getSleepDisabled()
   return (out and out:match("1")) ~= nil
 end
 
-local function refreshMenu()
+-- 只在状态真正变化时才重设菜单栏项。无条件每秒重设会让 macOS 反复重排整条
+-- 菜单栏，在 macOS 27 上表现为 WindowServer 刷 _CGXPackagesSetWindowConstraints:
+-- Invalid window（约 120 次/分钟），进而偶发 set_cursor_surface 失败、光标不变形。
+local lastSleepDisabled = nil
+
+local function refreshMenu(force)
   if not lidMenu then return end
-  if getSleepDisabled() then
+  local disabled = getSleepDisabled()
+  if not force and disabled == lastSleepDisabled then return end
+  lastSleepDisabled = disabled
+  if disabled then
     if iconAwake then lidMenu:setIcon(iconAwake, true); lidMenu:setTitle(nil)
     else lidMenu:setTitle("☕") end
     lidMenu:setTooltip("合盖不睡眠（程序继续跑）— 点击切回默认")
@@ -68,20 +76,24 @@ end
 local function toggleClamshell()
   local target = getSleepDisabled() and "0" or "1"
   hs.execute("/usr/bin/sudo -n /usr/bin/pmset -a disablesleep " .. target)
-  refreshMenu()
+  refreshMenu(true)
   hs.alert.show(target == "1" and cfg.alertAwake or cfg.alertSleep, 1.5)
 end
 
 if lidMenu then
   lidMenu:setClickCallback(toggleClamshell)
-  refreshMenu()
+  refreshMenu(true)
 end
 
 if cfg.hotkeyEnabled and cfg.hotkeyKey and #cfg.hotkeyMods > 0 then
   hs.hotkey.bind(cfg.hotkeyMods, cfg.hotkeyKey, toggleClamshell)
 end
 
-menuTimer = hs.timer.doEvery(cfg.pollInterval, refreshMenu)  -- 全局：防 GC
+-- 菜单栏指示器只反映 SleepDisabled 状态，而它只会被本模块的热键/点击改动（那两条
+-- 路径已经主动调 refreshMenu(true)）。外部改动极罕见，所以这里不需要 1 秒轮询——
+-- 每次轮询都要 fork 一个 `pmset -g | awk` 子进程，是剩余 Invalid window 的来源。
+local menuInterval = cfg.menuRefreshInterval or 15
+menuTimer = hs.timer.doEvery(menuInterval, refreshMenu)  -- 全局：防 GC
 menuTimer:start()
 
 local savedBrightness = nil
@@ -89,13 +101,16 @@ local fadeTask = nil
 -- lidPoller 同样是全局（防 GC），不要加 local
 local notifyTimer = nil
 
-local function sendIMessage(text)
-  if not cfg.notifyEnabled or not cfg.phone or cfg.phone == "" then return end
-  local script = string.format(
-    'tell application "Messages" to send %q to buddy %q of (1st service whose service type = iMessage)',
-    text, cfg.phone
-  )
-  hs.task.new("/usr/bin/osascript", nil, { "-e", script }):start()
+local function sendBark(text)
+  if not cfg.notifyEnabled or not cfg.barkKey or cfg.barkKey == "" then return end
+  local url = "https://api.day.app/" .. cfg.barkKey
+    .. "/" .. hs.http.encodeForQuery("Clamshell Mode")
+    .. "/" .. hs.http.encodeForQuery(text)
+  hs.http.asyncGet(url, nil, function(status, body, _)
+    if status ~= 200 then
+      print("[clamshell] Bark notify failed: " .. tostring(status) .. " " .. tostring(body))
+    end
+  end)
 end
 
 local function fadeBrightnessTo(targetInt, durationSec)
@@ -129,10 +144,10 @@ lidPoller = hs.timer.doEvery(cfg.pollInterval, function()
         savedBrightness = hs.brightness.get()
         hs.brightness.set(0)
       end
-      if cfg.notifyEnabled and cfg.phone and cfg.phone ~= "" then
+      if cfg.notifyEnabled and cfg.barkKey and cfg.barkKey ~= "" then
         if notifyTimer then notifyTimer:stop() end
         notifyTimer = hs.timer.doAfter(cfg.notifyDelaySec, function()
-          sendIMessage(string.format(
+          sendBark(string.format(
             "📌 你的 Mac 在「合盖不睡眠」模式下已合盖 %d 分钟，记得检查一下",
             math.floor(cfg.notifyDelaySec / 60)
           ))
