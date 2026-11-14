@@ -22,6 +22,7 @@ macOS「合盖不睡眠」工具：Hammerspoon（`clamshell.lua`，菜单栏切�
 
 - **build-app.sh 的产物路径必须问工具链**（2026-11-13 修复）：Swift 6.4 的新构建系统把产物放在 `.build/out/Products/Release/`，旧的 `.build/arm64-apple-macosx/release/` 下会留着过期二进制。脚本原先写死旧路径，于是 `swift build` 报成功、装进 App 的却是 8 月的文件。现用 `swift build -c release --show-bin-path`。排查这类"改了代码界面没变"先比对二进制修改时间，并确认旧进程真的退了（AppleScript 里这个 App 叫 `Clamshell Mode`，不是进程名 `ClamshellModeApp`）。
 - **合盖后的耗电大头是显示链路**（2026-11-13 实测，开盖状态）：整机约 16–17 W，WindowServer 约 44% CPU、iTerm2 约 11%；`disablesleep` 下合盖系统仍认为屏幕开着，亮度 0 只灭背光。接电源时关屏计时是「永不」，20 分钟后屏保还会在合着的盖子下播放。
+- **合盖省电实测（2026-11-13 22:08–23:54，电池供电，两个开关都开）**：合盖后关屏和低电量模式在同一秒生效（22:08:17），1 小时 47 分钟全程没有系统睡眠记录，开盖当秒（23:54:59）屏幕点亮、`powermode` 恢复 0/0、现场文件清除。「合盖期间屏幕被唤醒后再关一次」这条路径没被触发（期间屏幕没亮过），仍未验证。耗电约 7.8%/小时（约 5 W）；同一天下午没开这两项、屏幕靠 10 分钟闲置计时关闭的那次是约 5.1%/小时（约 3.5 W）——两次跑的东西不同，不能据此判断开关省了多少。核对办法：`pmset -g log` 看关屏/亮屏时刻，`/usr/bin/log show --predicate 'process == "powerd" AND category == "lowPowerMode"'` 看低电量模式切换，`eventMessage CONTAINS "capacity change"` 看每 1% 电量的时间点。zsh 里 `log` 是内建命令，必须写全路径 `/usr/bin/log`。
 - **ClamshellConfig 解码是全字段 decodeIfPresent + 默认兜底**（extension 里的自定义 `init(from:)`，必须放 extension 否则 memberwise init 丢失）。以后加配置字段不会再触发"老 JSON 整体解码失败回退默认"。
 - **install.sh 幂等坑（2026-08-03 修复）**：`grep -qF "$MARKER"` 的 MARKER 以 `--` 开头会被 BSD grep 当长选项 → 检查恒失败 → 每跑一次就往 init.lua 重复追加 require 块。现改为直接检查 `require("clamshell")` 字符串。
 - sudoers 规则（`/etc/sudoers.d/clamshell-mode-pmset`）放行**整个** `/usr/bin/pmset`。
@@ -39,7 +40,7 @@ diff ~/Documents/clamshell/clamshell.lua ~/.hammerspoon/clamshell.lua  # 核对 
 
 ## Open items
 
-- **合盖省电待实测**：需要用户合盖约 1 分钟再打开，核对 `pmset -g log` 里的关屏时刻、合盖期间 `pmset -g custom` 的能耗模式、开盖后是否恢复。
+- **合盖省电到底省了多少，没有对照数据**：功能本身已实测通过（见上「合盖省电实测」），但 2026-11-13 两次合盖的负载不同，耗电数字不可比。要下结论需同一负载下开、关各合盖 30 分钟以上再比电量曲线。
 - **朋友机器待升级**（tsc@100.100.15.127，Tailscale，密码认证走 keyboard-interactive 且偶发抖动；sudo 要密码）：仍是旧 Bark(barkURL) 孤本版 + phone 字段 config。升级 = `git pull` + `./install.sh`；config 会被保留，需在 GUI 重填 barkKey。
 - **旧克隆 `~/clamshell-mode-mac` 可清理**：其分支 `fix/menubar-refresh-window-storm` 的光标修复已收编进 main（2026-08-03），无孤本价值。
 - `~/.hammerspoon/backup-20260803-052548/` 是 2026-08-03 交接前的运行时备份，确认稳定后可删。
