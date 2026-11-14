@@ -8,6 +8,7 @@ One-click macOS "lid-closed without sleep" toggle, with automatic dim-on-close a
 - **Awake mode** keeps the system fully running on lid close (programs, downloads, training jobs all uninterrupted), while the screen brightness drops to 0 to save power and protect the panel
 - **Lid-open** triggers a 60fps sub-percent brightness fade back to your previous level — no jarring flash
 - **Optional Bark push reminder** when the lid has been closed for a long time, so you don't forget the laptop is still running in your bag
+- **Optional lid-closed power saving**: turn the display off as soon as the lid closes and switch to Low Power Mode while it stays closed, restored on lid open
 
 > Verified on Apple Silicon Mac. Should work on Intel Macs too, but the `setbrightness` helper has not been tested there.
 
@@ -66,11 +67,11 @@ Or grab the prebuilt `.dmg` from [Releases](https://github.com/KrisWonka/clamshe
 > ⚠️ Closed-lid awake mode means the chassis is in a bag with limited cooling, and battery drains faster. Remember to switch back when you're not using it.
 
 ### Configurator (`Clamshell Mode.app`)
-Open via Spotlight. Three tabs:
+Open via Spotlight. Everything lives on one page:
 
-- **Setup**: live status of Hammerspoon / sudoers
-- **Settings**: system display timers (screen saver start / display-off on battery / display-off on power, reads & writes macOS settings directly), Bark reminder (device key + delay threshold + test push), brightness fade duration, hotkey, menu bar icon (any SF Symbol), and per-feature toggles. **Auto-reloads Hammerspoon on save**
-- **About**: repo link
+- **System status**: whether Hammerspoon is running and passwordless `pmset` sudo is set up
+- **Settings**: system display timers (screen saver start / display-off on battery / display-off on power, reads & writes macOS settings directly), Bark reminder (device key + delay threshold + test push), lid-closed power saving (display off / Low Power Mode), brightness fade duration, hotkey, menu bar icon (any SF Symbol), and per-feature toggles. **Auto-reloads Hammerspoon on save**
+- The ⓘ button in the window's top-left corner: about and repo link
 
 ## Manual config
 
@@ -86,6 +87,8 @@ You can edit the config file directly without the GUI — `~/.hammerspoon/clamsh
   "hotkeyKey": "6",
   "notifyEnabled": false,
   "barkKey": "your-bark-device-key",
+  "lidCloseDisplaySleep": false,
+  "lidCloseLowPower": false,
   "notifyDelaySec": 900,
   "iconSleep": "zzz",
   "iconAwake": "cup.and.saucer.fill"

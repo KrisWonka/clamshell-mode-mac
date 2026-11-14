@@ -8,6 +8,7 @@ macOS 「合盖不睡眠」一键切换 + 合盖自动调暗 / 开盖渐亮。�
 - **唤醒模式下** 合盖：系统继续运行（程序、下载、训练全部不中断），屏幕亮度归 0 省电护屏
 - **开盖瞬间** 用 60fps 小数精度过渡平滑升回原亮度，无突兀闪烁
 - **长时间合盖 Bark 推送提醒**（可选），方便包里跑着别忘了
+- **合盖省电**（可选）：合盖后立即关闭显示器、合盖期间切到低电量模式，开盖自动恢复
 
 > Apple Silicon Mac 验证通过。Intel Mac 理论也可用，但 `setbrightness` 工具未测试。
 
@@ -64,11 +65,11 @@ cd clamshell-mode-mac
 > ⚠️ 合盖不睡时机器在包里散热受限，电池也消耗更快。长时间不用记得切回。
 
 ### 配置 GUI（**Clamshell Mode.app**）
-Spotlight 搜「Clamshell」打开。三个标签：
+Spotlight 搜「Clamshell」打开。所有内容都在一页里：
 
-- **Setup**：实时检测 Hammerspoon / sudoers 状态
-- **Settings**：系统亮屏时间（屏保启动 / 电池关屏 / 电源关屏，直接读写系统设置）、Bark 提醒（device key + 延时阈值 + 测试推送）、亮度过渡时长、快捷键、菜单栏图标（任意 SF Symbol）、各功能独立开关。**保存后自动重载**
-- **About**：仓库链接
+- **系统状态**：Hammerspoon 是否在运行、pmset 免密 sudo 是否配好
+- **设置项**：系统亮屏时间（屏保启动 / 电池关屏 / 电源关屏，直接读写系统设置）、Bark 提醒（device key + 延时阈值 + 测试推送）、合盖省电（关闭显示器 / 低电量模式）、亮度过渡时长、快捷键、菜单栏图标（任意 SF Symbol）、各功能独立开关。**保存后自动重载**
+- 窗口左上角的 ⓘ 按钮：关于与仓库链接
 
 ## 手动改配置
 
@@ -84,6 +85,8 @@ Spotlight 搜「Clamshell」打开。三个标签：
   "hotkeyKey": "6",
   "notifyEnabled": false,
   "barkKey": "your-bark-device-key",
+  "lidCloseDisplaySleep": false,
+  "lidCloseLowPower": false,
   "notifyDelaySec": 900,
   "iconSleep": "zzz",
   "iconAwake": "cup.and.saucer.fill"

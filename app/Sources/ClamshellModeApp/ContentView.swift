@@ -2,37 +2,42 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var config: ClamshellConfig = ClamshellConfig.load()
+    @State private var showAbout = false
 
     var body: some View {
-        TabView {
-            SetupView()
-                .tabItem { Label("Setup", systemImage: "wrench.and.screwdriver") }
-            SettingsView(config: $config)
-                .tabItem { Label("Settings", systemImage: "slider.horizontal.3") }
-            AboutView()
-                .tabItem { Label("About", systemImage: "info.circle") }
-        }
-        .frame(minWidth: 720, minHeight: 600)
-        .padding(.top, 4)
+        SettingsView(config: $config)
+            .frame(minWidth: 720, minHeight: 600)
+            .toolbar {
+                ToolbarItem(placement: .navigation) {
+                    Button { showAbout.toggle() } label: {
+                        Image(systemName: "info.circle")
+                    }
+                    .help("关于")
+                    .popover(isPresented: $showAbout, arrowEdge: .bottom) {
+                        AboutView()
+                    }
+                }
+            }
     }
 }
 
 struct AboutView: View {
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 10) {
             Image(nsImage: NSApp.applicationIconImage)
                 .resizable()
                 .scaledToFit()
-                .frame(width: 80, height: 80)
+                .frame(width: 64, height: 64)
             Text("Clamshell Mode")
-                .font(.largeTitle).bold()
-            Text("macOS 合盖不睡眠 + 智能亮度联动 + 远程切换")
+                .font(.title2).bold()
+            Text("macOS 合盖不睡眠 + 亮度联动 + 合盖省电")
+                .font(.callout)
                 .foregroundColor(.secondary)
             Link("github.com/KrisWonka/clamshell-mode-mac",
                  destination: URL(string: "https://github.com/KrisWonka/clamshell-mode-mac")!)
-            Spacer()
+                .font(.callout)
         }
-        .padding(40)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(24)
+        .frame(width: 320)
     }
 }

@@ -6,6 +6,7 @@ struct SettingsView: View {
     @State private var screenTimers = ScreenTimers(screensaverMin: 20, displaySleepBatteryMin: nil, displaySleepACMin: 0)
     @State private var loadedTimers: ScreenTimers? = nil   // 读入快照，diff 基准；nil = 尚未加载
     @State private var sudoOK = true
+    @State private var hsRunning = true
     @State private var testPushStatus: TestPushStatus = .idle
 
     enum SaveStatus { case idle, saving, saved, error(String) }
@@ -14,11 +15,12 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            Section("系统状态") {
+                statusRow("Hammerspoon 运行中", hsRunning, hint: "启动 Hammerspoon")
+                statusRow("pmset 免密 sudo", sudoOK, hint: "运行 install.sh 配置")
+            }
+
             Section("系统亮屏时间") {
-                if !sudoOK {
-                    Label("pmset 免密 sudo 未配置，请到 Setup 页检查", systemImage: "exclamationmark.triangle.fill")
-                        .foregroundColor(.red)
-                }
                 timerPicker("启动屏幕保护程序",
                             selection: $screenTimers.screensaverMin,
                             base: ScreenTimersIO.screensaverBase,
@@ -54,6 +56,14 @@ struct SettingsView: View {
                         .font(.system(.body, design: .monospaced))
                 }
                 .disabled(!config.fadeEnabled)
+            }
+
+            Section("合盖省电（唤醒模式下）") {
+                Toggle("合盖后立即关闭显示器", isOn: $config.lidCloseDisplaySleep)
+                Toggle("合盖期间使用低电量模式", isOn: $config.lidCloseLowPower)
+                Text("关屏后 Mac 会按系统设置锁屏，程序和网络照常运行，但截图类自动化在此期间不可用。低电量模式在开盖时自动恢复为原来的设置。")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
 
             Section("Bark 长时间合盖提醒") {
@@ -142,10 +152,12 @@ struct SettingsView: View {
             DispatchQueue.global().async {
                 let timers = ScreenTimersIO.readAll()
                 let sudo = SystemInfo.isSudoersConfigured
+                let hs = SystemInfo.isHammerspoonRunning
                 DispatchQueue.main.async {
                     screenTimers = timers
                     loadedTimers = timers
                     sudoOK = sudo
+                    hsRunning = hs
                 }
             }
         }
@@ -157,6 +169,16 @@ struct SettingsView: View {
                         .keyboardShortcut("s", modifiers: .command)
                 }
             }
+        }
+    }
+
+    private func statusRow(_ name: String, _ ok: Bool, hint: String) -> some View {
+        HStack {
+            Image(systemName: ok ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                .foregroundColor(ok ? .green : .orange)
+            Text(name)
+            Spacer()
+            if !ok { Text(hint).font(.caption).foregroundColor(.secondary) }
         }
     }
 
@@ -225,6 +247,7 @@ struct SettingsView: View {
                 try config.save()
                 IconRenderer.regenerate(sleep: config.iconSleep, awake: config.iconAwake)
                 SystemInfo.reloadHammerspoon()
+                let hs = SystemInfo.isHammerspoonRunning
                 var timerError: String? = nil
                 var fresh: ScreenTimers? = nil
                 if let (new, prev) = timersToApply {
@@ -232,6 +255,7 @@ struct SettingsView: View {
                     fresh = ScreenTimersIO.readAll()   // 回读确认，UI 回显系统真实值
                 }
                 DispatchQueue.main.async {
+                    hsRunning = hs
                     if let fresh {
                         screenTimers = fresh
                         loadedTimers = fresh
