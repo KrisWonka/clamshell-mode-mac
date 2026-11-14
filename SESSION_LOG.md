@@ -1,5 +1,13 @@
 # SESSION LOG
 
+## 2026-11-13 — 合盖省电两个开关 + 单页界面 + 构建脚本修复
+
+- 起因：用户发现唤醒模式合盖后仍在全功率跑。只读采样确认大头是显示链路（WindowServer 约 44% CPU），不是后台 App。
+- 新增两个开关（代码默认关，用户本机已开）：合盖即关屏、合盖期间低电量模式并在开盖恢复；合盖现场落盘防重载丢失。
+- GUI 改成单页：三个标签取消，状态检查并入页面顶部，About 改成 ⓘ 小面板，删 `SetupView.swift`。
+- 修 `build-app.sh`：新版 Swift 换了产物目录，脚本一直在装 8 月的旧二进制，改为 `--show-bin-path`。
+- 待办：真实合盖路径没测过，等用户合盖一次后核对。朋友机器仍待升级。
+
 ## 2026-08-03 — Bark 提醒迁移 + SSH 移除 + 贝壳图标 + 孤本修复收编
 
 - iMessage 提醒 → **Bark**（config `phone`→`barkKey`，Config 解码改全字段 decodeIfPresent 容错；lua `sendBark`；GUI 分区带测试推送按钮，真机验证 iPhone 收到 ✓）；iPhone-SSH 远程切换整套删除（SetupView 两卡片 + SystemInfo 六函数 + README 整节）。
