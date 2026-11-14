@@ -11,8 +11,10 @@ APP_DIR="/Applications/${APP_NAME}.app"
 echo "→ swift build -c release"
 swift build -c release
 
-BIN_PATH=".build/arm64-apple-macosx/release/ClamshellModeApp"
-[ -f "$BIN_PATH" ] || BIN_PATH=".build/release/ClamshellModeApp"
+# 产物目录必须问工具链，不能写死：SwiftPM 换过布局（.build/<triple>/release →
+# .build/out/Products/Release），写死的旧路径下会留着过期二进制并被悄悄装进 App。
+BIN_PATH="$(swift build -c release --show-bin-path)/ClamshellModeApp"
+[ -f "$BIN_PATH" ] || { echo "找不到构建产物：$BIN_PATH" >&2; exit 1; }
 
 echo "→ 创建 bundle 结构"
 rm -rf "$APP_DIR"
