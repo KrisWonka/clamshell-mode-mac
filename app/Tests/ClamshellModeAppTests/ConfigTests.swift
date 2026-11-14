@@ -35,4 +35,21 @@ final class ConfigTests: XCTestCase {
         XCTAssertTrue(json.contains("\"barkKey\""))
         XCTAssertFalse(json.contains("\"phone\""))
     }
+
+    /// 合盖省电两个开关：默认关；老 JSON 没这两个键时也是关；打开后能原样读回
+    func testLidPowerSavingTogglesDefaultOffAndRoundTrip() throws {
+        XCTAssertFalse(ClamshellConfig().lidCloseDisplaySleep)
+        XCTAssertFalse(ClamshellConfig().lidCloseLowPower)
+
+        let old = try JSONDecoder().decode(ClamshellConfig.self, from: #"{"fadeDuration": 2.5}"#.data(using: .utf8)!)
+        XCTAssertFalse(old.lidCloseDisplaySleep)
+        XCTAssertFalse(old.lidCloseLowPower)
+
+        var cfg = ClamshellConfig()
+        cfg.lidCloseDisplaySleep = true
+        cfg.lidCloseLowPower = true
+        let back = try JSONDecoder().decode(ClamshellConfig.self, from: try JSONEncoder().encode(cfg))
+        XCTAssertTrue(back.lidCloseDisplaySleep)
+        XCTAssertTrue(back.lidCloseLowPower)
+    }
 }

@@ -14,6 +14,8 @@ struct ClamshellConfig: Codable, Equatable {
     var iconAwake: String = "cup.and.saucer.fill"
     var alertSleep: String = "Clam Sleep"
     var alertAwake: String = "Clam Awake"
+    var lidCloseDisplaySleep: Bool = false
+    var lidCloseLowPower: Bool = false
 
     static let configPath: String = {
         NSString(string: "~/.hammerspoon/clamshell-config.json").expandingTildeInPath
@@ -61,5 +63,7 @@ extension ClamshellConfig {
         iconAwake      = try c.decodeIfPresent(String.self,   forKey: .iconAwake)      ?? d.iconAwake
         alertSleep     = try c.decodeIfPresent(String.self,   forKey: .alertSleep)     ?? d.alertSleep
         alertAwake     = try c.decodeIfPresent(String.self,   forKey: .alertAwake)     ?? d.alertAwake
+        lidCloseDisplaySleep = try c.decodeIfPresent(Bool.self, forKey: .lidCloseDisplaySleep) ?? d.lidCloseDisplaySleep
+        lidCloseLowPower     = try c.decodeIfPresent(Bool.self, forKey: .lidCloseLowPower)     ?? d.lidCloseLowPower
     }
 }

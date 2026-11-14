@@ -75,6 +75,8 @@ else
   "notifyDelaySec" : 900,
   "notifyEnabled" : false,
   "barkKey" : "",
+  "lidCloseDisplaySleep" : false,
+  "lidCloseLowPower" : false,
   "pollInterval" : 1
 }
 EOF
